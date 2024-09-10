@@ -10,7 +10,7 @@ dependencies:
   - torchvision==0.14.0
   - torchaudio==0.13.0
   - cudatoolkit=11.6
-  - numpy
+  - numpy==1.26.4
   - scipy
   - protobuf
   - pip:
