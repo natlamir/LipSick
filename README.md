@@ -16,7 +16,7 @@ See branches for [Linux](https://github.com/Inferencer/LipSick/tree/linux) or Hu
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/Inferencer/LipSick.git
+git clone https://github.com/natlamir/LipSick.git
 cd LipSick
 ```
 2. Create and activate the Anaconda environment:
