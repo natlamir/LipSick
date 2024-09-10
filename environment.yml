@@ -19,7 +19,7 @@ dependencies:
     - resampy
     - python_speech_features
     - filetype==1.2.0
-    - gradio==4.26.0
+    - gradio==4.43.0
     - psutil
     - tqdm
     - tensorflow==2.10.0
