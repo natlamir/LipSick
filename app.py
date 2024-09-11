@@ -26,7 +26,7 @@ def compute_crop_radius_stats(video_file):
     print(f"Done: Crop radius = {most_common}")
     return most_common
 
-def process_files(source_video, driving_audio, custom_crop_radius=None, auto_mask=True, ref_index_1=None, ref_index_2=None, ref_index_3=None, ref_index_4=None, ref_index_5=None, activate_custom_frames=False):
+def process_files(source_video, driving_audio, custom_crop_radius=None, auto_mask=True, ref_index_1=None, ref_index_2=None, ref_index_3=None, ref_index_4=None, ref_index_5=None, activate_custom_frames=False, chin_extension=100, chin_width=30, side_point_drop=100):
     ref_indices = [index for index in [ref_index_1, ref_index_2, ref_index_3, ref_index_4, ref_index_5] if index is not None]
     if custom_crop_radius is None or custom_crop_radius == 0:
         ref_indices = [index + 5 for index in ref_indices]
@@ -52,7 +52,10 @@ def process_files(source_video, driving_audio, custom_crop_radius=None, auto_mas
         '--pretrained_lipsick_path', pretrained_model_path,
         '--deepspeech_model_path', deepspeech_model_path,
         '--res_video_dir', res_video_dir,
-        '--custom_reference_frames', ref_indices_str
+        '--custom_reference_frames', ref_indices_str,
+        '--chin_extension', str(chin_extension),
+        '--chin_width', str(chin_width),
+        '--side_point_drop', str(side_point_drop)
     ]
 
     if custom_crop_radius is not None:
@@ -109,6 +112,11 @@ with gr.Blocks(css=".input_number { width: 80px; }") as iface:
             )
             gr.Markdown("___")  # Visual separator for layout
             
+            with gr.Row():
+                chin_extension = gr.Slider(minimum=0, maximum=200, step=1, value=100, label="Chin Extension")
+                chin_width = gr.Slider(minimum=0, maximum=100, step=1, value=30, label="Chin Width")
+                side_point_drop = gr.Slider(minimum=0, maximum=200, step=1, value=100, label="Side Point Drop")
+            
             activate_custom_frames = gr.Checkbox(label="Activate Custom Reference Frames", value=False)
             
             gr.Markdown("""
@@ -156,7 +164,7 @@ with gr.Blocks(css=".input_number { width: 80px; }") as iface:
         # Adjust outputs to include only the processed video
         process_btn.click(
             fn=process_files,
-            inputs=[source_video, driving_audio, custom_crop_radius, auto_mask, ref_index_1, ref_index_2, ref_index_3, ref_index_4, ref_index_5, activate_custom_frames],
+            inputs=[source_video, driving_audio, custom_crop_radius, auto_mask, ref_index_1, ref_index_2, ref_index_3, ref_index_4, ref_index_5, activate_custom_frames, chin_extension, chin_width, side_point_drop],
             outputs=[status_text, output_video]
         )
     iface.launch(inbrowser=True)

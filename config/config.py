@@ -44,6 +44,10 @@ class LipSickInferenceOptions:
         self.parser.add_argument("--pretrained_lipsick_path", type=str, default="./asserts/pretrained_lipsick.pth", help="Path to the pretrained LipSick model")
         self.parser.add_argument("--deepspeech_model_path", type=str, default="./asserts/output_graph.pb", help="Path to the DeepSpeech model")
         self.parser.add_argument("--res_video_dir", type=str, default="./asserts/inference_result", help="Directory to save the resulting video")
+        
+        self.parser.add_argument("--chin_extension", type=int, default=100, help="Chin extension")
+        self.parser.add_argument("--chin_width", type=int, default=30, help="Chin width")
+        self.parser.add_argument("--side_point_drop", type=int, default=100, help="Side point drop")
 
         self.parser.add_argument("--custom_crop_radius", type=int, default=None, help="Custom crop radius for all frames")
         self.parser.add_argument("--custom_reference_frames", type=str, default=None, help="Comma-separated list of custom reference frame indices")

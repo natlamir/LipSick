@@ -249,6 +249,9 @@ if __name__ == '__main__':
         cmd = [
             'python', 'utils/blend.py',
             '--samelength_video_path', samelength_video_path,
-            '--pre_blend_video_path', pre_blend_video_path
+            '--pre_blend_video_path', pre_blend_video_path,
+            '--chin_extension', str(opt.chin_extension),
+            '--chin_width', str(opt.chin_width),
+            '--side_point_drop', str(opt.side_point_drop)
         ]
         subprocess.call(cmd, shell=True)

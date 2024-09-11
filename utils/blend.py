@@ -18,7 +18,7 @@ from utils.common import get_versioned_filename
 face_detector = dlib.get_frontal_face_detector()
 landmark_predictor = dlib.shape_predictor("./models/shape_predictor_68_face_landmarks.dat")
 
-def main(samelength_path, pre_blend_path):
+def main(samelength_path, pre_blend_path, chin_extension, chin_width, side_point_drop):
     # Extract frames from the samelength video
     print('Extracting frames from samelength video')
     same_length_dir = os.path.join(os.path.dirname(samelength_path), 'samelength')
@@ -36,7 +36,7 @@ def main(samelength_path, pre_blend_path):
     print('Tracking Face of Lip-synced (LipSick) video please wait..')
 
     # Call the blending function
-    blend_videos(same_length_dir, pre_blend_dir, samelength_path, pre_blend_path)
+    blend_videos(same_length_dir, pre_blend_dir, samelength_path, pre_blend_path, chin_extension, chin_width, side_point_drop)
 
 def extract_frames_from_video(video_path, save_dir):
     videoCapture = cv2.VideoCapture(video_path)
@@ -59,21 +59,39 @@ def load_landmark_dlib(image_path):
     landmarks = np.array([[p.x, p.y] for p in shape.parts()])
     return landmarks
 
-def alpha_blend_face(original_frame, generated_frame, landmarks):
+def alpha_blend_face(original_frame, generated_frame, landmarks,
+                     chin_extension, chin_width, side_point_drop):
     mask = np.zeros(original_frame.shape[:2], dtype=np.float32)
-    points = cv2.convexHull(np.concatenate((landmarks[3:15], landmarks[30:36], landmarks[48:68])))
-
-    if len(points) < 3:
+    
+    # Extend the mask by including more points below the chin
+    face_outline = landmarks[0:17]  # Jawline
+    nose_bridge = landmarks[27:31]  # Nose bridge
+    mouth_outline = landmarks[48:61]  # Outer lip
+    
+    # Add points below the chin
+    chin_point = landmarks[8]
+    below_chin_points = np.array([
+        [chin_point[0], chin_point[1] + chin_extension],
+        [chin_point[0] - chin_width, chin_point[1] + side_point_drop],
+        [chin_point[0] + chin_width, chin_point[1] + side_point_drop]
+    ])
+    
+    # Combine all points
+    points = np.concatenate((face_outline, nose_bridge, mouth_outline, below_chin_points))
+    
+    # Create convex hull
+    hull = cv2.convexHull(points)
+    
+    if len(hull) < 3:
         raise ValueError("Convex hull could not be formed. Not enough points.")
-
-    cv2.fillConvexPoly(mask, points, 1.0)
+    
+    cv2.fillConvexPoly(mask, hull, 1.0)
     mask = cv2.GaussianBlur(mask, (51, 51), 30)
     mask = mask[..., np.newaxis]
     blended_frame = original_frame * (1 - mask) + generated_frame * mask
-
     return blended_frame.astype(np.uint8)
 
-def blend_videos(same_length_dir, pre_blend_dir, samelength_path, pre_blend_path):
+def blend_videos(same_length_dir, pre_blend_dir, samelength_path, pre_blend_path, chin_extension, chin_width, side_point_drop):
     # Get frames from both videos
     same_length_frame_path_list = glob.glob(os.path.join(same_length_dir, '*.jpg'))
     same_length_frame_path_list.sort()
@@ -97,7 +115,7 @@ def blend_videos(same_length_dir, pre_blend_dir, samelength_path, pre_blend_path
         pre_blend_frame = cv2.imread(pre_blend_frame_path)
 
         try:
-            blended_frame = alpha_blend_face(same_length_frame, pre_blend_frame, landmark_data)
+            blended_frame = alpha_blend_face(same_length_frame, pre_blend_frame, landmark_data, chin_extension, chin_width, side_point_drop)
         except ValueError as e:
             print(f"Skipping frame {i+1} due to error: {e}")
             blended_frame = same_length_frame  # Use original frame if blending fails
@@ -126,6 +144,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Alpha blend two videos based on facial landmarks')
     parser.add_argument('--samelength_video_path', type=str, required=True, help='Path to the samelength.mp4 video')
     parser.add_argument('--pre_blend_video_path', type=str, required=True, help='Path to the pre_blend.mp4 video')
+    parser.add_argument("--chin_extension", type=int, default=100, help="Chin extension")
+    parser.add_argument("--chin_width", type=int, default=30, help="Chin width")
+    parser.add_argument("--side_point_drop", type=int, default=100, help="Side point drop")
     args = parser.parse_args()
 
-    main(args.samelength_video_path, args.pre_blend_video_path)
+    main(args.samelength_video_path, args.pre_blend_video_path, args.chin_extension, args.chin_width, args.side_point_drop)
